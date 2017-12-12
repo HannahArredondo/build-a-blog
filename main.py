@@ -30,15 +30,42 @@ def newpost():
 
     return render_template("new_post.html", title = "CreatePost")
 
-@app.route("/blog")
+@app.route("/blog", methods = ['POST', 'GET'])
 def index():
-    is_blog_id = request.args.get('id')
-    if is_blog_id:
-        single_blog = Blog.query.filter_by(id = is_blog_id).first()
-        return render_template("single_entry.html", blog = single_blog)
+    if request.method == 'POST':
+        blog_name= request.form['name']
+        blog_entry= request.form['entry']
+        print(blog_name, blog_entry)
+        name_error = ""
+        entry_error = ""
+
+        if blog_name == "":
+            name_error = "Please add a blog title."
+            print (name_error)
+
+        if blog_entry =="":
+            entry_error = "Please add some content to the new blog post."
+        
+        if name_error or entry_error:
+            print (name_error)
+            return render_template("new_post.html", blog_name = blog_name, blog_entry = blog_entry, 
+            name_error = name_error, entry_error = entry_error)
+        
+        else:
+            new_blog = Blog(blog_name, blog_entry)
+            db.session.add(new_blog)
+            db.session.commit()
+
+            return render_template("single_entry.html", blog = new_blog)
+
     else:
-        blogs = Blog.query.all()
-        return render_template("blog.html", blogs = blogs, title = "YourBlogs")
+        is_blog_id = request.args.get('id')
+        if is_blog_id:
+            single_blog = Blog.query.filter_by(id = is_blog_id).first()
+            return render_template("single_entry.html", blog = single_blog)
+        else:
+            blogs = Blog.query.all()
+            return render_template("blog.html", blogs = blogs, title = "YourBlogs")
 
 
 if __name__ == "__main__":
